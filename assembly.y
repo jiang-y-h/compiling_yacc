@@ -68,19 +68,19 @@ expr    :
         if($1.type==2){strcat($$.code,$1.code);}
         if($3.type==2){strcat($$.code,$1.code);}
         if($1.type==1){
-            strcat($$.code,"\n mov r3 ");strcat($$.code,$1.value);
+            strcat($$.code,"\n mov r3, ");strcat($$.code,$1.value);
         }
         else{
-            strcat($$.code,"\n ldr r3 ");strcat($$.code,$1.value);
+            strcat($$.code,"\n ldr r3, ");strcat($$.code,$1.value);
         }
         if($3.type==1){
-            strcat($$.code,"\n mov r2 ");strcat($$.code,$3.value);
+            strcat($$.code,"\n mov r2, ");strcat($$.code,$3.value);
         }
         else{
-            strcat($$.code,"\n ldr r2 ");strcat($$.code,$3.value);
+            strcat($$.code,"\n ldr r2, ");strcat($$.code,$3.value);
         }
         snprintf($$.value, sizeof($$.value), "result%d", count);count++;
-        strcat($$.code,"\n add r3 r2 \n str r3 ");strcat($$.code,$$.value);
+        strcat($$.code,"\n add r3, r2 \n str r3, ");strcat($$.code,$$.value);
         }
         
         |       expr MINUS expr   {            $$.type=2;
@@ -88,38 +88,38 @@ expr    :
         if($1.type==2){strcat($$.code,$1.code);}
         if($3.type==2){strcat($$.code,$1.code);}
         if($1.type==1){
-            strcat($$.code,"\n mov r3 ");strcat($$.code,$1.value);
+            strcat($$.code,"\n mov r3, ");strcat($$.code,$1.value);
         }
         else{
-            strcat($$.code,"\n ldr r3 ");strcat($$.code,$1.value);
+            strcat($$.code,"\n ldr r3, ");strcat($$.code,$1.value);
         }
         if($3.type==1){
-            strcat($$.code,"\n mov r2 ");strcat($$.code,$3.value);
+            strcat($$.code,"\n mov r2, ");strcat($$.code,$3.value);
         }
         else{
-            strcat($$.code,"\n ldr r2 ");strcat($$.code,$3.value);
+            strcat($$.code,"\n ldr r2, ");strcat($$.code,$3.value);
         }
         snprintf($$.value, sizeof($$.value), "result%d", count);count++;
-        strcat($$.code,"\n sub r3 r2 \n str r3 ");strcat($$.code,$$.value); 
+        strcat($$.code,"\n sub r3, r2 \n str r3, ");strcat($$.code,$$.value); 
         }
         |       expr MULT expr   {            $$.type=2;
         strcpy($$.code," ");
         if($1.type==2){strcat($$.code,$1.code);}
         if($3.type==2){strcat($$.code,$1.code);}
         if($1.type==1){
-            strcat($$.code,"\n mov r3 ");strcat($$.code,$1.value);
+            strcat($$.code,"\n mov r3, ");strcat($$.code,$1.value);
         }
         else{
-            strcat($$.code,"\n ldr r3 ");strcat($$.code,$1.value);
+            strcat($$.code,"\n ldr r3, ");strcat($$.code,$1.value);
         }
         if($3.type==1){
-            strcat($$.code,"\n mov r2 ");strcat($$.code,$3.value);
+            strcat($$.code,"\n mov r2, ");strcat($$.code,$3.value);
         }
         else{
-            strcat($$.code,"\n ldr r2 ");strcat($$.code,$3.value);
+            strcat($$.code,"\n ldr r2, ");strcat($$.code,$3.value);
         }
         snprintf($$.value, sizeof($$.value), "result%d", count);count++;
-        strcat($$.code,"\n mul r4 r3 r2 \n str r4 ");strcat($$.code,$$.value); }
+        strcat($$.code,"\n mul r4, r3 ,r2 \n str r4, ");strcat($$.code,$$.value); }
         |       expr DIV expr   {$$.type=0; }
         |       LEFTPAR expr RIGHTPAR   {$$.type=$2.type;strcpy($$.code,$2.code);strcat($$.value,$2.value);}
         |       MINUS expr %prec UMINUS   {$$.type=2;strcpy($$.code,$2.code);strcat($$.value,$2.value);
@@ -128,18 +128,18 @@ expr    :
             strcpy($$.value,"-");strcat($$.value,$2.value);
         }
         else{
-            strcat($$.code,"\n ldr r3 ");strcat($$.code,$2.value);
-            strcat($$.code,"\n mov r2 #0 \n sub r2 r3 \n str r2 ");
+            strcat($$.code,"\n ldr r3, ");strcat($$.code,$2.value);
+            strcat($$.code,"\n mov r2 ,#0 \n sub r2, r3 \n str r2, ");
             strcat($$.code,$$.value);
         }
         
         }
         | NUMBER {$$.type=1;strcpy($$.value,$1);}
         |       ID EQUAL expr {$$.type=2;
-        if($3.type==1){strcpy($$.code,"\n mov r3 ");strcat($$.code,$3.value);strcat($$.code,"\n str r3 ");strcat($$.code,$1);}
-        else if($3.type==0){strcpy($$.code,"\n ldr r3 ");strcat($$.code,$3.value);strcat($$.code,"\n str r3 ");strcat($$.code,$1);}
+        if($3.type==1){strcpy($$.code,"\n mov r3, ");strcat($$.code,$3.value);strcat($$.code,"\n str r3, ");strcat($$.code,$1);}
+        else if($3.type==0){strcpy($$.code,"\n ldr r3, ");strcat($$.code,$3.value);strcat($$.code,"\n str r3, ");strcat($$.code,$1);}
         else{
-        strcat($$.code,$3.code);strcat($$.code,"\n ldr r3 ");strcat($$.code,$3.value);strcat($$.code,"\n str r3 ");strcat($$.code,$1);    
+        strcat($$.code,$3.code);strcat($$.code,"\n ldr r3, ");strcat($$.code,$3.value);strcat($$.code,"\n str r3, ");strcat($$.code,$1);    
         }
         }
         |       ID {$$.type=0;strcpy($$.value,$1);}

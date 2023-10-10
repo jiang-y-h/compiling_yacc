@@ -13,17 +13,10 @@ extern int yyparse();
 FILE* yyin;
 void yyerror(const char* s);
 
-//符号数据结构
-//struct symbol{
-//        char id[50];
-//        char value[10];
-//}; 
-//struct symbol symtab[10];
-
 struct code
 {
-    char code[100];
-    char value[100];
+    char code[500];
+    char value[500];
     int type;
 };
 
@@ -66,21 +59,26 @@ expr    :
             $$.type=2;
         strcpy($$.code," ");
         if($1.type==2){strcat($$.code,$1.code);}
-        if($3.type==2){strcat($$.code,$1.code);}
+        if($3.type==2){strcat($$.code,$3.code);}
         if($1.type==1){
             strcat($$.code,"\n mov r3, ");strcat($$.code,$1.value);
         }
         else{
             strcat($$.code,"\n ldr r3, ");strcat($$.code,$1.value);
+            strcat($$.code,"\n ldr r3 ,[r3]");
+
         }
         if($3.type==1){
             strcat($$.code,"\n mov r2, ");strcat($$.code,$3.value);
         }
         else{
             strcat($$.code,"\n ldr r2, ");strcat($$.code,$3.value);
+            strcat($$.code,"\n ldr r2 ,[r2]");
+            
         }
         snprintf($$.value, sizeof($$.value), "result%d", count);count++;
-        strcat($$.code,"\n add r3, r2 \n str r3, ");strcat($$.code,$$.value);
+        strcat($$.code,"\n add r3, r2 \n ldr r2, ");strcat($$.code,$$.value);
+        strcat($$.code,"\n str r3 ,[r2]");
         }
         
         |       expr MINUS expr   {            $$.type=2;
@@ -92,15 +90,18 @@ expr    :
         }
         else{
             strcat($$.code,"\n ldr r3, ");strcat($$.code,$1.value);
+            strcat($$.code,"\n ldr r3 ,[r3]");
         }
         if($3.type==1){
             strcat($$.code,"\n mov r2, ");strcat($$.code,$3.value);
         }
         else{
             strcat($$.code,"\n ldr r2, ");strcat($$.code,$3.value);
+            strcat($$.code,"\n ldr r2 ,[r2]");
         }
         snprintf($$.value, sizeof($$.value), "result%d", count);count++;
-        strcat($$.code,"\n sub r3, r2 \n str r3, ");strcat($$.code,$$.value); 
+        strcat($$.code,"\n sub r3, r2 \n ldr r2, ");strcat($$.code,$$.value);
+        strcat($$.code,"\n str r3 ,[r2]"); 
         }
         |       expr MULT expr   {            $$.type=2;
         strcpy($$.code," ");
@@ -111,16 +112,23 @@ expr    :
         }
         else{
             strcat($$.code,"\n ldr r3, ");strcat($$.code,$1.value);
+            strcat($$.code,"\n ldr r3 ,[r3]");
         }
         if($3.type==1){
             strcat($$.code,"\n mov r2, ");strcat($$.code,$3.value);
         }
         else{
             strcat($$.code,"\n ldr r2, ");strcat($$.code,$3.value);
+            strcat($$.code,"\n ldr r2 ,[r2]");
         }
         snprintf($$.value, sizeof($$.value), "result%d", count);count++;
-        strcat($$.code,"\n mul r4, r3 ,r2 \n str r4, ");strcat($$.code,$$.value); }
-        |       expr DIV expr   {$$.type=0; }
+        strcat($$.code,"\n mul r4, r3 ,r2 \n ldr r2, ");strcat($$.code,$$.value); 
+        strcat($$.code,"\n str r4 ,[r2]"); 
+        }
+        
+        |       expr DIV expr   {$$.type=0; 
+        
+        }
         |       LEFTPAR expr RIGHTPAR   {$$.type=$2.type;strcpy($$.code,$2.code);strcat($$.value,$2.value);}
         |       MINUS expr %prec UMINUS   {$$.type=2;strcpy($$.code,$2.code);strcat($$.value,$2.value);
         if($2.type==1){
@@ -129,17 +137,18 @@ expr    :
         }
         else{
             strcat($$.code,"\n ldr r3, ");strcat($$.code,$2.value);
-            strcat($$.code,"\n mov r2 ,#0 \n sub r2, r3 \n str r2, ");
+            strcat($$.code,"\n mov r2 ,#0 \n sub r2, r3 \n ldr r3, ");
             strcat($$.code,$$.value);
+            strcat($$.code,"\n str r2 ,[r3]"); 
         }
         
         }
         | NUMBER {$$.type=1;strcpy($$.value,$1);}
         |       ID EQUAL expr {$$.type=2;
-        if($3.type==1){strcpy($$.code,"\n mov r3, ");strcat($$.code,$3.value);strcat($$.code,"\n str r3, ");strcat($$.code,$1);}
-        else if($3.type==0){strcpy($$.code,"\n ldr r3, ");strcat($$.code,$3.value);strcat($$.code,"\n str r3, ");strcat($$.code,$1);}
+        if($3.type==1){strcpy($$.code,"\n mov r3, ");strcat($$.code,$3.value);strcat($$.code,"\n ldr r2, ");strcat($$.code,$1);}
+        else if($3.type==0){strcpy($$.code,"\n ldr r3, ");strcat($$.code,$3.value);strcat($$.code,"\n ldr r2, ");strcat($$.code,$1);strcat($$.code,"\n str r2 ,[r3]");}
         else{
-        strcat($$.code,$3.code);strcat($$.code,"\n ldr r3, ");strcat($$.code,$3.value);strcat($$.code,"\n str r3, ");strcat($$.code,$1);    
+        strcat($$.code,$3.code);strcat($$.code,"\n ldr r3, ");strcat($$.code,$3.value);strcat($$.code,"\n ldr r2, ");strcat($$.code,$1);strcat($$.code,"\n str r2 ,[r3]");    
         }
         }
         |       ID {$$.type=0;strcpy($$.value,$1);}
@@ -157,22 +166,21 @@ int yylex()
         if(t==' '||t=='\t'||t=='\n'){
             //do noting
         }else if(isdigit(t)){
-            yylval.num=(char*)malloc(100);
+            yylval.num=(char*)malloc(500);
             //TODO:解析多位数字返回数字类型
             int num = 0;
             while (isdigit(t)) {
                 num =num * 10 + t - '0';
                 t = getchar();
             }
-            // ungetc函数将读出的多余字符再次放回到缓冲区去，下一次读数字符进行下一个单词识别时会再次读出来。
-            // 此时非数字字符已经读出，因此需要再次放回缓冲区
+            // ungetc函数将多读的字符放回缓冲区 
             ungetc(t, stdin);
             snprintf(yylval.num,sizeof(yylval.num),"%d",num);
             return NUMBER;
             
         }else if(t=='_'||(t>='a'&&t<='z')||(t>='A'&&t<='Z')){
-            char * id=(char*)malloc(100);
-            yylval.num=(char*)malloc(100);
+            char * id=(char*)malloc(500);
+            yylval.num=(char*)malloc(500);
             int i=0;
             id[i++]=t;
             t = getchar();
